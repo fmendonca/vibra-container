@@ -1,0 +1,34 @@
+name: Build and Push Containerfile on Tag
+
+on:
+  push:
+    tags:
+      - 'v*'  # Executa apenas quando um push de tag como v1.0.0 for feito
+  workflow_dispatch:  
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    env:
+      REGISTRY: ghcr.io
+      IMAGE_NAME: ${{ github.repository }}
+      TAG: ${{ github.ref_name }}
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v3
+
+      - name: Logar no GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build imagem com Containerfile
+        run: |
+          docker build -f Containerfile -t $REGISTRY/$IMAGE_NAME:$TAG .
+
+      - name: Push imagem para GHCR
+        run: |
+          docker push $REGISTRY/$IMAGE_NAME:$TAG
